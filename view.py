@@ -4,8 +4,9 @@ import model
 cell_size=5
 is_running=False
 
+#Initialize the board, with a root, canvas, start/pause button, clear button, slider, and options menu
 def setup():
-    global root, grid_view, cell_size, start_button, clear_button, choice
+    global root, grid_view, cell_size, start_button, clear_button, choice, drag_bar
     root=Tk()
     root.title('The Game of Life')
 
@@ -22,6 +23,9 @@ def setup():
     clear_button=Button(root, text='Clear', width='12')
     clear_button.bind('<Button-1>', clear_handler)
 
+    drag_bar = Scale(root, from_=500, to=10, orient="horizontal", showvalue=False)
+    drag_bar.set(50)
+
     choice=StringVar(root)
     choice.set('Choose a Pattern')
     option=OptionMenu(root, choice, 'Choose a Pattern',
@@ -35,7 +39,9 @@ def setup():
     start_button.grid(row=1, column=0, sticky=W, padx=20, pady=20)
     option.grid(row=1, column=1, padx=20)
     clear_button.grid(row=1, column=2, sticky=E, padx=20, pady=20)
+    drag_bar.grid(row=2,column=1, padx=20)
 
+#Start button handler which sets the start button to "pause" or "start" depending on if the program is running or not.
 def start_handler(event):
     global is_running, start_button
 
@@ -47,6 +53,7 @@ def start_handler(event):
         start_button.configure(text='Pause')
         update()
 
+#Clear button handler which sets every cell on the board to white
 def clear_handler(event):
     global is_running, start_button
 
@@ -58,8 +65,9 @@ def clear_handler(event):
     start_button.configure(text='Start')
     update()
 
+#Option handler which binds each selection to a specific grid pattern
 def option_handler(event):
-    global is_running, start_button, choice
+    global is_running, choice
 
     is_running=False
     start_button.configure(text='Start')
@@ -68,10 +76,14 @@ def option_handler(event):
 
     if selection=='glider':
         model.load_pattern(model.glider_pattern, 10, 10)
+    elif selection=='glider gun':
+        model.load_pattern(model.glider_gun_pattern, 10, 10)
     elif selection=='random':
         model.randomize(model.grid_model, model.width, model.height)
     update()
 
+
+#Grid handler which switches the state of any cell which is clicked.
 def grid_handler(event):
     global grid_view, cell_size
 
@@ -85,8 +97,10 @@ def grid_handler(event):
         model.grid_model[x][y]=1
         draw_cell(x,y,'black')
 
+#Generate the next generation at a speed determined by the value of the slider
 def update():
-    global grid_view, root, is_running
+    global grid_view, root, is_running, drag_bar
+    gen_speed=drag_bar.get()
     grid_view.delete(ALL)
     model.next_gen()
 
@@ -96,8 +110,9 @@ def update():
                 draw_cell(i, j, 'black')
 
     if is_running:
-        root.after(100, update)
+        root.after(gen_speed, update)
 
+#Function to display the cell as a black or white box depending on if it is living or dead
 def draw_cell(row, col, color):
     global grid_view, cell_size
 
